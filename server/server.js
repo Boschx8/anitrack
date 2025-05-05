@@ -8,7 +8,9 @@ const UserAnime = require('./models/UserAnime');
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['https://anitrack-paofzw6s0-paus-projects-f755df0f.vercel.app/', 'http://localhost:3000']
+}));
 app.use(express.json());
 
 // MongoDB connection
