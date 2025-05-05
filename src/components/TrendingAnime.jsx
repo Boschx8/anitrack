@@ -2,6 +2,17 @@ import React from 'react';
 import AnimeCard from './AnimeCard';
 
 const TrendingAnime = ({ animeList = [] }) => {
+  if (animeList.length === 0) {
+    return (
+      <section className="anime-section">
+        <div className="section-header">
+          <h3>Trending Now</h3>
+        </div>
+        <div>No trending anime available at the moment.</div>
+      </section>
+    );
+  }
+
   return (
     <section className="anime-section">
       <div className="section-header">

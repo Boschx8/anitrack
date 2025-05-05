@@ -26,14 +26,15 @@ const HomePage = () => {
           getAllTimePopularAnime()
         ]);
         
-        // Remove duplicates across sections
-        const processedUpcoming = removeDuplicates(upcoming, trending);
-        const processedPopular = removeDuplicates(popular, [...trending, ...processedUpcoming]);
+        // Remove duplicates within each section
+        const uniqueTrending = removeDuplicatesInSection(trending);
+        const uniqueUpcoming = removeDuplicatesInSection(upcoming);
+        const uniquePopular = removeDuplicatesInSection(popular);
         
         // Set state with processed data
-        setTrendingAnimes(trending);
-        setUpcomingAnimes(processedUpcoming);
-        setPopularAnimes(processedPopular);
+        setTrendingAnimes(uniqueTrending);
+        setUpcomingAnimes(uniqueUpcoming);
+        setPopularAnimes(uniquePopular);
         
       } catch (error) {
         console.error('Error fetching anime data:', error);
@@ -46,11 +47,16 @@ const HomePage = () => {
     fetchAllData();
   }, []);
 
-  // Helper function to remove duplicates between sections
-  const removeDuplicates = (newAnimes, existingAnimes) => {
-    return newAnimes.filter(newAnime => 
-      !existingAnimes.some(existing => existing.mal_id === newAnime.mal_id)
-    );
+  // Helper function to remove duplicates within a section
+  const removeDuplicatesInSection = (animes) => {
+    const uniqueIds = new Set();
+    return animes.filter(anime => {
+      if (uniqueIds.has(anime.mal_id)) {
+        return false;
+      }
+      uniqueIds.add(anime.mal_id);
+      return true;
+    });
   };
 
   if (loading) {

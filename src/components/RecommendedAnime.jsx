@@ -2,6 +2,17 @@ import React from 'react';
 import AnimeCard from './AnimeCard';
 
 const RecommendedAnime = ({ animeList = [] }) => {
+  if (animeList.length === 0) {
+    return (
+      <section className="recommended-section">
+        <div className="section-header">
+          <h3>Upcoming Next Season</h3>
+        </div>
+        <div>No upcoming anime available at the moment.</div>
+      </section>
+    );
+  }
+
   return (
     <section className="recommended-section">
       <div className="section-header">
