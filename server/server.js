@@ -9,7 +9,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['https://anitrack-paofzw6s0-paus-projects-f755df0f.vercel.app/', 'http://localhost:3000']
+  origin: ['https://anitrack-sable.vercel.app/', 'http://localhost:3000']
 }));
 app.use(express.json());
 
