@@ -1311,6 +1311,7 @@ body {
   .collection-detail-header h1,
   .collections-header h1 {
     font-size: 2rem;
+    margin-top: 4rem;
   }
   
   .collection-detail-header p,
@@ -1326,8 +1327,7 @@ body {
   }
   
   .collections-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
   
   .collection-detail-header,
@@ -1338,6 +1338,7 @@ body {
   .collection-detail-header h1,
   .collections-header h1 {
     font-size: 1.75rem;
+   
   }
 }
 
@@ -2414,7 +2415,7 @@ body {
   /* Characters and Staff */
   .characters-grid,
   .staff-grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 1rem;
   }
 
@@ -2490,7 +2491,7 @@ body {
 
   .characters-grid,
   .staff-grid {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
 
   .character-image,
