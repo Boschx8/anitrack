@@ -1,50 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import AnimeCard from './AnimeCard';
-import { getTrendingAnime } from '../utils/api';
 
-const TrendingAnime = () => {
-  const [animeList, setAnimeList] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await getTrendingAnime();
-        setAnimeList(data);
-      } catch (err) {
-        setError('Failed to fetch trending anime');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  if (loading) {
-    return (
-      <section className="anime-section">
-        <div className="section-header">
-          <h3>Trending Now</h3>
-        </div>
-        <div className="loading">Loading...</div>
-      </section>
-    );
-  }
-
-  if (error) {
-    return (
-      <section className="anime-section">
-        <div className="section-header">
-          <h3>Trending Now</h3>
-        </div>
-        <div className="error">{error}</div>
-      </section>
-    );
-  }
-
+const TrendingAnime = ({ animeList = [] }) => {
   return (
     <section className="anime-section">
       <div className="section-header">
