@@ -35,7 +35,7 @@ const AnimeCard = ({ anime, onStatusUpdate = () => {}, onDelete = () => {}, isPr
 
     try {
       // Enviar dades al servidor
-      const response = await fetch(`http://localhost:5000/api/user-anime/${user.sub}/anime`, {
+      const response = await fetch(`https://anitrack-93bx.onrender.com/api/user-anime/${user.sub}/anime`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -79,7 +79,7 @@ const AnimeCard = ({ anime, onStatusUpdate = () => {}, onDelete = () => {}, isPr
     try {
       // Enviar petició d'eliminació al servidor
       const response = await fetch(
-        `http://localhost:5000/api/user-anime/${user.sub}/anime/${anime.mal_id}`, 
+        `https://anitrack-93bx.onrender.com/api/user-anime/${user.sub}/anime/${anime.mal_id}`, 
         { method: 'DELETE' }
       );
 
