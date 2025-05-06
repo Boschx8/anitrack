@@ -31,7 +31,7 @@ const Catalog = () => {
   // Estats per mostrar/amagar filtre en mòbil
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   
-  // Filtre seleccionat
+  // Filtre seleccionat - Canviar a array per permetre múltiples gèneres
   const [genreFilter, setGenreFilter] = useState([]);
   const [statusFilter, setStatusFilter] = useState([]);
   const [ratingFilter, setRatingFilter] = useState([]);
@@ -55,6 +55,42 @@ const Catalog = () => {
   const [statusOpen, setStatusOpen] = useState(true);
   const [ratingOpen, setRatingOpen] = useState(true);
 
+  // Nou estat per mostrar filtres actius
+  const [activeFilters, setActiveFilters] = useState([]);
+
+  // Funció per actualitzar els filtres actius
+  useEffect(() => {
+    const filters = [];
+    
+    // Afegir gèneres
+    genreFilter.forEach(genreId => {
+      const genre = genres.find(g => g.id === genreId);
+      if (genre) {
+        filters.push({ type: 'genre', id: genreId, name: genre.name });
+      }
+    });
+    
+    // Afegir estats
+    statusFilter.forEach(status => {
+      filters.push({ type: 'status', id: status, name: status });
+    });
+    
+    // Afegir ratings
+    ratingFilter.forEach(rating => {
+      const ratingObj = ratings.find(r => r.value === rating);
+      if (ratingObj) {
+        filters.push({ type: 'rating', id: rating, name: ratingObj.label });
+      }
+    });
+    
+    // Afegir any si és diferent a l'actual
+    if (yearFilter !== new Date().getFullYear()) {
+      filters.push({ type: 'year', id: 'year', name: `Year: ${yearFilter}` });
+    }
+    
+    setActiveFilters(filters);
+  }, [genreFilter, statusFilter, ratingFilter, yearFilter]);
+
   // Carregar més animes
   const loadMore = () => {
     if (!loading && hasMore) {
@@ -62,13 +98,16 @@ const Catalog = () => {
     }
   };
 
-  // Canviar filtre gènere
+  // Canviar filtre gènere - Modificat per permetre múltiples gèneres
   const handleGenreChange = (genreId) => {
     if (genreFilter.includes(genreId)) {
-      setGenreFilter([]);
+      // Si ja està seleccionat, el treiem
+      setGenreFilter(genreFilter.filter(id => id !== genreId));
     } else {
-      setGenreFilter([genreId]);
+      // Si no està seleccionat, l'afegim
+      setGenreFilter([...genreFilter, genreId]);
     }
+    // Reiniciar la pàgina i la llista d'animes
     setPage(1);
     setAnimes([]);
   };
@@ -76,9 +115,9 @@ const Catalog = () => {
   // Canviar filtre estat
   const handleStatusChange = (status) => {
     if (statusFilter.includes(status)) {
-      setStatusFilter([]);
+      setStatusFilter(statusFilter.filter(s => s !== status));
     } else {
-      setStatusFilter([status]);
+      setStatusFilter([...statusFilter, status]);
     }
     setPage(1);
     setAnimes([]);
@@ -87,9 +126,9 @@ const Catalog = () => {
   // Canviar filtre rating
   const handleRatingChange = (rating) => {
     if (ratingFilter.includes(rating)) {
-      setRatingFilter([]);
+      setRatingFilter(ratingFilter.filter(r => r !== rating));
     } else {
-      setRatingFilter([rating]);
+      setRatingFilter([...ratingFilter, rating]);
     }
     setPage(1);
     setAnimes([]);
@@ -103,6 +142,51 @@ const Catalog = () => {
       setPage(1);
       setAnimes([]);
     }
+  };
+  
+  // Funció per eliminar un filtre
+  const removeFilter = (type, id) => {
+    if (type === 'genre') {
+      setGenreFilter(genreFilter.filter(genreId => genreId !== id));
+    } else if (type === 'status') {
+      setStatusFilter(statusFilter.filter(status => status !== id));
+    } else if (type === 'rating') {
+      setRatingFilter(ratingFilter.filter(rating => rating !== id));
+    } else if (type === 'year') {
+      setYearFilter(new Date().getFullYear());
+    }
+    setPage(1);
+    setAnimes([]);
+  };
+  
+  // Funció per netejar tots els filtres
+  const clearAllFilters = () => {
+    setGenreFilter([]);
+    setStatusFilter([]);
+    setRatingFilter([]);
+    setYearFilter(new Date().getFullYear());
+    setPage(1);
+    setAnimes([]);
+  };
+
+  // Funció per filtrar contingut explícit
+  const filterExplicitContent = (animeList) => {
+    return animeList.filter(anime => {
+      // Comprovar si l'anime té gèneres
+      if (!anime.genres || anime.genres.length === 0) return true;
+      
+      // Filtra els animes que tinguin gèneres explícits
+      const explicitGenreIds = [9, 12, 49]; // 9: Ecchi, 12: Hentai, 49: Erotica
+      const hasExplicitGenre = anime.genres.some(genre => 
+        explicitGenreIds.includes(genre.mal_id)
+      );
+      
+      // També filtrar per rating
+      const hasExplicitRating = anime.rating === 'Rx - Hentai';
+      
+      // Retornar només els animes que NO siguin explícits
+      return !hasExplicitGenre && !hasExplicitRating;
+    });
   };
 
   // Obtenir animes de l'API
@@ -131,24 +215,25 @@ const Catalog = () => {
           url += `&start_date=${yearFilter}-01-01&end_date=${yearFilter}-12-31`;
         }
         
-        // Afegir filtre per gènere
+        // Afegir filtre per gènere - Modificat per múltiples gèneres
         if (genreFilter.length > 0) {
-          url += `&genres=${genreFilter[0]}`;
+          url += `&genres=${genreFilter.join(',')}`;
         }
         
         // Afegir filtre per estat
-        if (statusFilter.length > 0) {
-          if (statusFilter[0] === 'Airing') {
+        statusFilter.forEach(status => {
+          if (status === 'Airing') {
             url += '&status=airing';
-          } else if (statusFilter[0] === 'Complete') {
+          } else if (status === 'Complete') {
             url += '&status=completed';
-          } else if (statusFilter[0] === 'Upcoming') {
+          } else if (status === 'Upcoming') {
             url += '&status=upcoming';
           }
-        }
+        });
         
         // Afegir filtre per rating
         if (ratingFilter.length > 0) {
+          // Només podem filtrar per un rating a la vegada en l'API
           url += `&rating=${ratingFilter[0].toUpperCase()}`;
         }
         
@@ -168,11 +253,14 @@ const Catalog = () => {
         const data = await response.json();
         const newAnimes = data.data || [];
         
+        // Filtrar contingut explícit
+        const filteredAnimes = filterExplicitContent(newAnimes);
+        
         // Actualitzar llista d'animes
         if (page === 1) {
-          setAnimes(newAnimes);
+          setAnimes(filteredAnimes);
         } else {
-          setAnimes([...animes, ...newAnimes]);
+          setAnimes([...animes, ...filteredAnimes]);
         }
         
         // Comprovar si hi ha més pàgines
@@ -221,6 +309,7 @@ const Catalog = () => {
         </div>
 
         <div className="filters-content">
+          
           {/* Secció Any */}
           <div className="filter-section">
             <div 
@@ -354,6 +443,68 @@ const Catalog = () => {
             <option value="rating">Sort by Rating</option>
           </select>
         </div>
+
+        {/* Mostrar filtres actius */}
+        {activeFilters.length > 0 && (
+          <div 
+            className="active-filters"
+            style={{
+              display: 'flex', 
+              flexWrap: 'wrap', 
+              gap: '0.5rem', 
+              marginBottom: '1.5rem'
+            }}
+          >
+            {activeFilters.map((filter, index) => (
+              <div 
+                key={index} 
+                className="filter-tag"
+                style={{
+                  background: '#333',
+                  padding: '0.3rem 0.6rem',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontSize: '0.9rem'
+                }}
+              >
+                <span>{filter.name}</span>
+                <button 
+                  onClick={() => removeFilter(filter.type, filter.id)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'white',
+                    cursor: 'pointer',
+                    padding: '0',
+                    display: 'flex'
+                  }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ))}
+            <button 
+              onClick={clearAllFilters}
+              style={{
+                background: '#dc2626',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                padding: '0.3rem 0.6rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                fontSize: '0.9rem'
+              }}
+            >
+              <X size={16} />
+              Clear All
+            </button>
+          </div>
+        )}
 
         {/* Mostrar error si n'hi ha */}
         {error && (
