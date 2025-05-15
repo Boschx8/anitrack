@@ -112,12 +112,14 @@ const Catalog = () => {
     setAnimes([]);
   };
 
-  // Canviar filtre estat
+  // Canviar filtre estat (selecció única)
   const handleStatusChange = (status) => {
     if (statusFilter.includes(status)) {
-      setStatusFilter(statusFilter.filter(s => s !== status));
+      // Si ja està seleccionat, el desseleccionem
+      setStatusFilter([]);
     } else {
-      setStatusFilter([...statusFilter, status]);
+      // Seleccionem només aquest estat (reemplacem l'anterior)
+      setStatusFilter([status]);
     }
     setPage(1);
     setAnimes([]);
@@ -220,16 +222,18 @@ const Catalog = () => {
           url += `&genres=${genreFilter.join(',')}`;
         }
         
-        // Afegir filtre per estat
-        statusFilter.forEach(status => {
+        // Afegir filtre per estat - CORREGIT per afegir només un paràmetre status
+        if (statusFilter.length > 0) {
+          // Prioritzem el primer status seleccionat
+          const status = statusFilter[0];
           if (status === 'Airing') {
             url += '&status=airing';
           } else if (status === 'Complete') {
-            url += '&status=completed';
+            url += '&status=complete'; // Corregit: l'API espera "complete" no "completed"
           } else if (status === 'Upcoming') {
             url += '&status=upcoming';
           }
-        });
+        }
         
         // Afegir filtre per rating
         if (ratingFilter.length > 0) {
@@ -386,6 +390,11 @@ const Catalog = () => {
                   </label>
                 ))}
               </div>
+              {statusFilter.length > 0 && (
+                <p style={{ color: '#666', fontSize: '0.8rem', marginTop: '0.5rem' }}>
+                  Only one status can be selected at a time
+                </p>
+              )}
             </div>
           </div>
 
