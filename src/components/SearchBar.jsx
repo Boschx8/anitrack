@@ -46,7 +46,7 @@ const SearchBar = () => {
       };
 
       // Enviar les dades al servidor
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/user-anime/${user.sub}/anime`, {
+      const response = await fetch(`https://anitrack-93bx.onrender.com/api/user-anime/${user.sub}/anime`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
