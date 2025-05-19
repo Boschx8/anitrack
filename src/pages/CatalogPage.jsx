@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Filter, X } from 'lucide-react';
 import AnimeCard from '../components/AnimeCard';
-import LoadingSpinner from '..components/LoadingSpinner';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const CatalogPage = () => {
   // Llista de gèneres predefinits
