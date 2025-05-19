@@ -12,8 +12,7 @@ import AnimeDetailPage from './pages/AnimeDetailPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Footer from './components/Footer';
 import LoadingSpinner from './components/LoadingSpinner';
-import CollectionsPage from './pages/CollectionsPage';
-import CollectionDetailPage from './pages/CollectionDetailPage';
+
 
 const App = () => {
   const { isLoading, isAuthenticated } = useAuth();
@@ -41,8 +40,6 @@ const App = () => {
         {/* Public Routes */}
         <Route path="/" element={<HomePage />} />
         <Route path="/catalog" element={<CatalogPage />} />
-        <Route path="/collections" element={<CollectionsPage />} />
-        <Route path="/collections/:collectionId" element={<CollectionDetailPage />} />
         <Route path="/anime/:title" element={<AnimeDetailPage />} />
         
        

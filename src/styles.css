@@ -2574,57 +2574,6 @@ body {
 
 
 
-/* Coming Soon Page */
-.coming-soon-container {
-  margin-top: 5rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
-  text-align: center;
-  background-color: #121212;
-}
-
-.coming-soon-content {
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.coming-soon-image {
-  width:30%;
- 
-}
-
-.coming-soon-title {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  color: white;
-  font-weight: bold;
-}
-
-.coming-soon-text {
-  font-size: 1.2rem;
-  color: #999;
-  margin-bottom: 2rem;
-  line-height: 1.6;
-}
-
-@media (max-width: 768px) {
-  .coming-soon-title {
-    font-size: 2rem;
-  }
-
-  .coming-soon-text {
-    font-size: 1rem;
-  }
-
-  .coming-soon-image {
-    width: 50%;
-  }
-}
-
-
 
 
 

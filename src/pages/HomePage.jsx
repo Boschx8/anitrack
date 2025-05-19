@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import HeroSection from '../components/HeroSection';
-import RecommendedAnime from '../components/RecommendedAnime';
-import TrendingAnime from '../components/TrendingAnime';
-import CollectionsSection from '../components/CollectionsSection';
-import AlltimePopularAnime from '../components/AlltimePopular';
+import AnimeCard from '../components/AnimeCard';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { getTrendingAnime, getUpcomingAnime, getAllTimePopularAnime } from '../utils/api';
 
 const HomePage = () => {
   const [loading, setLoading] = useState(true);
@@ -14,80 +10,158 @@ const HomePage = () => {
   const [popularAnimes, setPopularAnimes] = useState([]);
   const [error, setError] = useState(null);
 
-  // Número de tarjetas deseado por sección
-  const CARDS_PER_SECTION = 6;
-
   useEffect(() => {
-    const fetchAllData = async () => {
+    const fetchAnimeData = async () => {
       try {
         setLoading(true);
         
-        // Fetch más animes de los necesarios para tener suficientes para reemplazar duplicados
-        // Pedimos 12 en lugar de 6 para tener extras
-        const trendingPromise = fetch(`https://api.jikan.moe/v4/top/anime?filter=airing&limit=12`);
-        const upcomingPromise = fetch(`https://api.jikan.moe/v4/seasons/upcoming?limit=12`);
-        const popularPromise = fetch(`https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=12`);
+        // Primer fem la petició d'animes en tendència per evitar errors de rate limiting
+        const trendingResponse = await fetch('https://api.jikan.moe/v4/top/anime?filter=airing&limit=6');
+        const trendingData = await trendingResponse.json();
+        setTrendingAnimes(trendingData.data || []);
         
-        // Esperamos todas las respuestas
-        const responses = await Promise.all([trendingPromise, upcomingPromise, popularPromise]);
+        // Esperem 1 segon per evitar errors de rate limiting
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Procesamos cada respuesta
-        const trendingData = await responses[0].json();
-        const upcomingData = await responses[1].json();
-        const popularData = await responses[2].json();
+        // Després fem la petició d'animes propers
+        const upcomingResponse = await fetch('https://api.jikan.moe/v4/seasons/upcoming?limit=6');
+        const upcomingData = await upcomingResponse.json();
+        setUpcomingAnimes(upcomingData.data || []);
         
-        // Obtenemos los arrays de animes de las respuestas
-        const trending = trendingData.data || [];
-        const upcoming = upcomingData.data || [];
-        const popular = popularData.data || [];
+        // Esperem un altre segon
+        await new Promise(resolve => setTimeout(resolve, 100));
         
-        // Procesamos cada sección para eliminar duplicados
-        const uniqueTrending = removeDuplicatesInSection(trending);
-        
-        // Si después de eliminar duplicados tenemos menos de 6, rellenamos con más tarjetas
-        const finalTrending = ensureMinimumCards(uniqueTrending, CARDS_PER_SECTION);
-        const finalUpcoming = ensureMinimumCards(removeDuplicatesInSection(upcoming), CARDS_PER_SECTION);
-        const finalPopular = ensureMinimumCards(removeDuplicatesInSection(popular), CARDS_PER_SECTION);
-        
-        // Actualizamos el estado
-        setTrendingAnimes(finalTrending);
-        setUpcomingAnimes(finalUpcoming);
-        setPopularAnimes(finalPopular);
+        try {
+          // Fem la petició per obtenir els animes populars
+          const popularResponse = await fetch('https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=18');
+          
+          if (!popularResponse.ok) {
+            throw new Error(`Error: ${popularResponse.status}`);
+          }
+          
+          const popularData = await popularResponse.json();
+          setPopularAnimes(popularData.data || []);
+          
+          // Si hi ha un problema específicament amb popular, no trenquem tota la càrrega
+        } catch (popularError) {
+          console.error('Error carregant animes populars:', popularError);
+          // No establim error global perquè la resta de la pàgina segueixi funcionant
+        }
         
       } catch (error) {
-        console.error('Error fetching anime data:', error);
+        console.error('Error carregant dades d\'anime:', error);
         setError('Failed to load anime data. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAllData();
+    fetchAnimeData();
   }, []);
 
-  // Helper function to remove duplicates within a section
-  const removeDuplicatesInSection = (animes) => {
-    const uniqueIds = new Set();
-    return animes.filter(anime => {
-      if (uniqueIds.has(anime.mal_id)) {
-        return false;
-      }
-      uniqueIds.add(anime.mal_id);
-      return true;
-    });
+  // Component intern per renderitzar la secció d'animes en tendència
+  const TrendingAnimeSection = ({ animeList }) => {
+    if (animeList.length === 0) {
+      return (
+        <section className="anime-section">
+          <div className="section-header">
+            <h3>Trending Now</h3>
+          </div>
+          <div>No trending anime available at the moment.</div>
+        </section>
+      );
+    }
+
+    return (
+      <section className="anime-section">
+        <div className="section-header">
+          <h3>Trending Now</h3>
+        </div>
+        <div className="anime-grid">
+          {animeList.map((anime) => (
+            <AnimeCard
+              key={anime.mal_id}
+              anime={{
+                title: anime.title,
+                genre: anime.genres?.map(g => g.name).join(', '),
+                image: anime.images?.jpg?.large_image_url,
+                mal_id: anime.mal_id
+              }}
+            />
+          ))}
+        </div>
+      </section>
+    );
   };
 
-  // Helper function to asegurar que tenemos al menos el número mínimo de tarjetas
-  const ensureMinimumCards = (animeList, minCount) => {
-    // Si ya tenemos suficientes tarjetas, devolvemos las primeras 'minCount'
-    if (animeList.length >= minCount) {
-      return animeList.slice(0, minCount);
+  // Component intern per renderitzar la secció d'animes propers
+  const UpcomingAnimeSection = ({ animeList }) => {
+    if (animeList.length === 0) {
+      return (
+        <section className="recommended-section">
+          <div className="section-header">
+            <h3>Upcoming Next Season</h3>
+          </div>
+          <div>No upcoming anime available at the moment.</div>
+        </section>
+      );
     }
-    
-    // Si tenemos menos de las necesarias, devolvemos todas las que tenemos
-    // (esto no debería ocurrir si pedimos suficientes extras en la API)
-    console.warn(`No se pudieron obtener ${minCount} animes únicos para una sección.`);
-    return animeList;
+
+    return (
+      <section className="recommended-section">
+        <div className="section-header">
+          <h3>Upcoming Next Season</h3>
+        </div>
+        <div className="anime-grid">
+          {animeList.map((anime) => (
+            <AnimeCard
+              key={anime.mal_id}
+              anime={{
+                title: anime.title,
+                genre: anime.genres?.map(g => g.name).join(', '),
+                image: anime.images?.jpg?.large_image_url,
+                mal_id: anime.mal_id
+              }}
+            />
+          ))}
+        </div>
+      </section>
+    );
+  };
+
+  // Component intern per renderitzar la secció d'animes populars
+  const PopularAnimeSection = ({ animeList }) => {
+    if (animeList.length === 0) {
+      return (
+        <section className="popular-section">
+          <div className="section-header">
+            <h3>All Time Popular</h3>
+          </div>
+          <div>No popular anime available at the moment.</div>
+        </section>
+      );
+    }
+
+    return (
+      <section className="popular-section">
+        <div className="section-header">
+          <h3>All Time Popular</h3>
+        </div>
+        <div className="anime-grid">
+          {animeList.map((anime) => (
+            <AnimeCard
+              key={anime.mal_id}
+              anime={{
+                title: anime.title,
+                genre: anime.genres?.map(g => g.name).join(', '),
+                image: anime.images?.jpg?.large_image_url,
+                mal_id: anime.mal_id
+              }}
+            />
+          ))}
+        </div>
+      </section>
+    );
   };
 
   if (loading) {
@@ -137,10 +211,9 @@ const HomePage = () => {
   return (
     <main>
       <HeroSection />
-      <TrendingAnime animeList={trendingAnimes} />
-      <RecommendedAnime animeList={upcomingAnimes} />
-      <AlltimePopularAnime animeList={popularAnimes} />
-      <CollectionsSection />
+      <TrendingAnimeSection animeList={trendingAnimes} />
+      <UpcomingAnimeSection animeList={upcomingAnimes} />
+      <PopularAnimeSection animeList={popularAnimes} />
     </main>
   );
 };
