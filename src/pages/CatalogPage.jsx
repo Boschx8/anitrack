@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Filter, X } from 'lucide-react';
-import AnimeCard from './AnimeCard';
+import AnimeCard from '../components/AnimeCard';
 import LoadingSpinner from './LoadingSpinner';
 
 const CatalogPage = () => {
