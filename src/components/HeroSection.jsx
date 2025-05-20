@@ -5,25 +5,25 @@ const heroContent = [
   {
     title: "Attack on Titan",
     description: "In a world where humanity lives inside cities surrounded by enormous walls due to the Titans, giant humanoid creatures who devour humans seemingly without reason, a young boy aims to break out of humanity's cage.",
-    imageUrl: "https://cloudfront-eu-central-1.images.arcpublishing.com/diarioas/4MEWI2K4D5HSFIIAXRURHLBXQU.jpg",
+    imageUrl: "https://wallpapers.com/images/hd/attacking-titan-eren-yeager-2ammtmkv0788k3oy.jpg",
     trailerUrl: "https://www.youtube.com/watch?v=MGRm4IzK1SQ"
   },
   {
     title: "Demon Slayer",
     description: "After a demon attack leaves his family slain and his sister turned, Tanjiro Kamado's journey as a demon slayer begins. Armed with his sword and his sister's humanity, he searches for a way to turn her human again.",
-    imageUrl: "https://s4.anilist.co/file/anilistcdn/media/anime/banner/101922-YfZhKBUDDS6L.jpg",
+    imageUrl: "https://4kwallpapers.com/images/walls/thumbs_3t/10716.jpg",
     trailerUrl: "https://www.youtube.com/watch?v=VQGCKyvzIM4"
   },
   {
     title: "Jujutsu Kaisen",
     description: "Yuji Itadori is an ordinary high school student who joins his school's Occult Club for fun. However, when they accidentally unseal a cursed object, his world is thrown into the realm of Cursed Spirits and sorcerers.",
-    imageUrl: "https://wallpapers.com/images/hd/anime-all-characters-hd-abdorpf0wfv8nbkf.jpg",
+    imageUrl: "https://images2.alphacoders.com/135/1356991.jpeg",
     trailerUrl: "https://www.youtube.com/watch?v=4A_X-Dvl0ws"
   },
   {
     title: "One Piece",
     description: "Monkey D. Luffy sets out with his loyal crew on an epic adventure to find the legendary One Piece treasure and become the Pirate King. Along the way, they face powerful enemies and form unbreakable bonds.",
-    imageUrl: "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/9c2e9d59-ee54-490e-bf96-5497f587844f/dghv910-fead846e-1076-4ae0-b86d-9451c670bc66.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcLzljMmU5ZDU5LWVlNTQtNDkwZS1iZjk2LTU0OTdmNTg3ODQ0ZlwvZGdodjkxMC1mZWFkODQ2ZS0xMDc2LTRhZTAtYjg2ZC05NDUxYzY3MGJjNjYuanBnIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.cwKXUKd53MxuupDVvXPqtsL91qtQNtxThFrw7pBeYJU",
+    imageUrl: "https://wallpapers.com/images/hd/one-piece-pictures-skkeai3yrs90gm9g.jpg",
     trailerUrl: "https://www.youtube.com/watch?v=S8_YwFLCh4U"
   },
   {

@@ -10,39 +10,90 @@ const HomePage = () => {
   const [popularAnimes, setPopularAnimes] = useState([]);
   const [error, setError] = useState(null);
 
+  // Funció per eliminar duplicats per ID
+  const removeDuplicates = (animeList) => {
+    const seen = new Set();
+    return animeList.filter(anime => {
+      if (anime && anime.mal_id && !seen.has(anime.mal_id)) {
+        seen.add(anime.mal_id);
+        return true;
+      }
+      return false;
+    });
+  };
+
+  // Funció per reemplaçar duplicats entre llistes
+  const replaceDuplicates = (primaryList, secondaryList, limit = 6) => {
+    // Obtenir ids de la llista primària
+    const primaryIds = new Set(primaryList.map(anime => anime.mal_id));
+    
+    // Filtrar la llista secundària per obtenir només elements únics
+    const uniqueSecondary = secondaryList.filter(anime => !primaryIds.has(anime.mal_id));
+    
+    // Si després de filtrar no tenim suficients elements a la llista primària
+    if (primaryList.length < limit && uniqueSecondary.length > 0) {
+      // Afegir elements de la llista secundària fins arribar al límit
+      const neededElements = Math.min(limit - primaryList.length, uniqueSecondary.length);
+      return [...primaryList, ...uniqueSecondary.slice(0, neededElements)];
+    }
+    
+    return primaryList;
+  };
+
   useEffect(() => {
     const fetchAnimeData = async () => {
       try {
         setLoading(true);
         
         // Primer fem la petició d'animes en tendència per evitar errors de rate limiting
-        const trendingResponse = await fetch('https://api.jikan.moe/v4/top/anime?filter=airing&limit=6');
+        const trendingResponse = await fetch('https://api.jikan.moe/v4/top/anime?filter=airing&limit=10');
         const trendingData = await trendingResponse.json();
-        setTrendingAnimes(trendingData.data || []);
+        // Demanem 10 elements per tenir alternatius si hi ha duplicats
+        const trendingList = removeDuplicates(trendingData.data || []).slice(0, 6);
         
         // Esperem 1 segon per evitar errors de rate limiting
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         // Després fem la petició d'animes propers
-        const upcomingResponse = await fetch('https://api.jikan.moe/v4/seasons/upcoming?limit=6');
+        const upcomingResponse = await fetch('https://api.jikan.moe/v4/seasons/upcoming?limit=10');
         const upcomingData = await upcomingResponse.json();
-        setUpcomingAnimes(upcomingData.data || []);
+        // Eliminem duplicats interns a la llista d'upcoming
+        let upcomingList = removeDuplicates(upcomingData.data || []);
+        
+        // Assegurem que no hi ha duplicats entre trending i upcoming
+        const trendingIds = new Set(trendingList.map(anime => anime.mal_id));
+        upcomingList = upcomingList.filter(anime => !trendingIds.has(anime.mal_id)).slice(0, 6);
+        
+        // Actualitzem els estats
+        setTrendingAnimes(trendingList);
+        setUpcomingAnimes(upcomingList);
         
         // Esperem un altre segon
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
         try {
           // Fem la petició per obtenir els animes populars
-          const popularResponse = await fetch('https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=18');
+          const popularResponse = await fetch('https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=24');
           
           if (!popularResponse.ok) {
             throw new Error(`Error: ${popularResponse.status}`);
           }
           
           const popularData = await popularResponse.json();
-          setPopularAnimes(popularData.data || []);
           
-          // Si hi ha un problema específicament amb popular, no trenquem tota la càrrega
+          // Obtenim tots els IDs que ja estem mostrant per evitar duplicats a popular
+          const existingIds = new Set([
+            ...trendingList.map(anime => anime.mal_id),
+            ...upcomingList.map(anime => anime.mal_id)
+          ]);
+          
+          // Filtrem els animes populars per evitar duplicats
+          const uniquePopularList = (popularData.data || []).filter(
+            anime => !existingIds.has(anime.mal_id)
+          ).slice(0, 18);
+          
+          setPopularAnimes(uniquePopularList);
+          
         } catch (popularError) {
           console.error('Error carregant animes populars:', popularError);
           // No establim error global perquè la resta de la pàgina segueixi funcionant
@@ -166,45 +217,7 @@ const HomePage = () => {
 
   if (loading) {
     return (
-      <div className="loading-container" style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        minHeight: 'calc(100vh - 200px)',
-        backgroundColor: '#121212'
-      }}>
         <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="error-container" style={{ 
-        textAlign: 'center',
-        padding: '3rem',
-        backgroundColor: '#121212',
-        color: 'white',
-        minHeight: 'calc(100vh - 200px)'
-      }}>
-        <h2>Something went wrong</h2>
-        <p>{error}</p>
-        <button 
-          onClick={() => window.location.reload()} 
-          className="retry-button"
-          style={{
-            backgroundColor: '#dc2626',
-            color: 'white',
-            padding: '0.75rem 1.5rem',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            marginTop: '1rem'
-          }}
-        >
-          Try Again
-        </button>
-      </div>
     );
   }
 

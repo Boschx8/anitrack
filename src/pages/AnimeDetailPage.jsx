@@ -1,5 +1,4 @@
-// AnimeDetailPage.jsx
-// This component displays detailed information about a specific anime
+// Pàgina per mostrar la informació detallada d'un anime
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
@@ -10,160 +9,138 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 const AnimeDetailPage = () => {
   const { title } = useParams();
+  const { user } = useAuth();
   
-  // Main State Management
+  // Estats principals
   const [anime, setAnime] = useState(null);
-  const [animeId, setAnimeId] = useState(null);
-
-    // Tab Content States
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview');
+  
+  // Estats per a les pestanyes
   const [characters, setCharacters] = useState([]);
   const [staff, setStaff] = useState([]);
   const [stats, setStats] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [loadingTab, setLoadingTab] = useState(false);
 
-   // UI States
-  const [loading, setLoading] = useState(true);
-  const [tabLoading, setTabLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview');
-
-  // User authentication state
-  const { user } = useAuth();
-
-  // Fetches basic anime information using the title from URL
-
+  // Efecte per carregar la informació bàsica de l'anime
   useEffect(() => {
-    const fetchAnimeDetails = async () => {
+    async function fetchAnimeData() {
       try {
         setLoading(true);
-        setError(null);
-
+        
+        // Busquem l'anime pel títol
         const searchResponse = await fetch(`https://api.jikan.moe/v4/anime?q=${title.replace(/-/g, ' ')}&limit=1`);
         
         if (!searchResponse.ok) {
-          throw new Error('Failed to find anime');
+          throw new Error('No s\'ha pogut trobar l\'anime');
         }
-
+        
         const searchData = await searchResponse.json();
         
         if (!searchData.data || searchData.data.length === 0) {
-          throw new Error('Anime not found');
+          throw new Error('Anime no trobat');
         }
-
-        // Get the ID from the search result
-        const foundAnimeId = searchData.data[0].mal_id;
-        setAnimeId(foundAnimeId);
-
-      
-
-        // Now fetch the full details using the ID
-        const response = await fetch(`https://api.jikan.moe/v4/anime/${foundAnimeId}/full`);
         
-        if (response.status === 429) {
-          throw new Error('Rate limit exceeded. Please try again later.');
-        }
-
+        // Obtenim l'ID de l'anime i després les dades completes
+        const animeId = searchData.data[0].mal_id;
+        const response = await fetch(`https://api.jikan.moe/v4/anime/${animeId}/full`);
+        
         if (!response.ok) {
-          throw new Error('Failed to fetch anime details');
+          throw new Error('Error carregant les dades de l\'anime');
         }
-
+        
         const data = await response.json();
         setAnime(data.data);
+        
       } catch (error) {
+        console.error('Error:', error);
         setError(error.message);
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchAnimeDetails();
+    }
+    
+    fetchAnimeData();
   }, [title]);
 
-  const fetchTabData = async (tab) => {
+  // Funció per carregar dades quan canviem de pestanya
+  async function loadTabData(tab) {
+    // Si ja tenim les dades d'aquesta pestanya, no cal fer res
     if (
       (tab === 'characters' && characters.length > 0) ||
       (tab === 'staff' && staff.length > 0) ||
       (tab === 'stats' && stats) ||
       (tab === 'reviews' && reviews.length > 0) ||
-      !animeId // prevent fetching without an ID
+      !anime
     ) {
       return;
     }
 
+    setLoadingTab(true);
+    
     try {
-      setTabLoading(true);
-      
-      // Add a delay to avoid rate limiting
+      // Esperar una mica per evitar problemes de rate limiting
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      let endpoint = '';
+      // URL per a la petició segons la pestanya
+      let url = '';
       
-      switch (tab) {
-        case 'characters':
-          endpoint = `https://api.jikan.moe/v4/anime/${animeId}/characters`;
-          const charResponse = await fetch(endpoint);
-          if (charResponse.ok) {
-            const data = await charResponse.json();
-            setCharacters(data.data);
-          }
-          break;
-
-        case 'staff':
-          endpoint = `https://api.jikan.moe/v4/anime/${animeId}/staff`;
-          const staffResponse = await fetch(endpoint);
-          if (staffResponse.ok) {
-            const data = await staffResponse.json();
-            setStaff(data.data);
-          }
-          break;
-
-        case 'stats':
-          endpoint = `https://api.jikan.moe/v4/anime/${animeId}/statistics`;
-          const statsResponse = await fetch(endpoint);
-          if (statsResponse.ok) {
-            const data = await statsResponse.json();
-            setStats(data.data);
-          }
-          break;
-
-        case 'reviews':
-          endpoint = `https://api.jikan.moe/v4/anime/${animeId}/reviews`;
-          const reviewsResponse = await fetch(endpoint);
-          if (reviewsResponse.ok) {
-            const data = await reviewsResponse.json();
-            setReviews(data.data.slice(0, 15)); // Limit to 15 reviews
-          }
-          break;
-
-        default:
-          break;
+      if (tab === 'characters') {
+        url = `https://api.jikan.moe/v4/anime/${anime.mal_id}/characters`;
+        const response = await fetch(url);
+        const data = await response.json();
+        setCharacters(data.data);
+      } 
+      else if (tab === 'staff') {
+        url = `https://api.jikan.moe/v4/anime/${anime.mal_id}/staff`;
+        const response = await fetch(url);
+        const data = await response.json();
+        setStaff(data.data);
+      } 
+      else if (tab === 'stats') {
+        url = `https://api.jikan.moe/v4/anime/${anime.mal_id}/statistics`;
+        const response = await fetch(url);
+        const data = await response.json();
+        setStats(data.data);
+      } 
+      else if (tab === 'reviews') {
+        url = `https://api.jikan.moe/v4/anime/${anime.mal_id}/reviews`;
+        const response = await fetch(url);
+        const data = await response.json();
+        setReviews(data.data.slice(0, 15)); // Limitem a 15 ressenyes
       }
+      
     } catch (error) {
-      console.error(`Error fetching ${tab} data:`, error);
+      console.error(`Error carregant dades de ${tab}:`, error);
     } finally {
-      setTabLoading(false);
+      setLoadingTab(false);
     }
-  };
+  }
 
-  // Updates active tab and triggers data fetch if needed
-  const handleTabChange = (tab) => {
+  // Funció per canviar de pestanya
+  function handleTabChange(tab) {
     setActiveTab(tab);
-    fetchTabData(tab);
-  };
+    loadTabData(tab);
+  }
 
-   // Manages adding anime to user lists (watching, completed, bookmarked)
-  const handleAnimeAction = async (status, showToast) => {
+  // Funció per afegir l'anime a una llista (watching, completed, bookmarked)
+  async function addToList(status, showToast) {
+    // Comprovar si l'usuari està connectat
     if (!user) {
-      showToast('Please login to add animes to your list', 'error');
+      showToast('Has d\'iniciar sessió per afegir animes a la teva llista', 'error');
       return;
     }
 
+    // Comprovar si tenim dades de l'anime
     if (!anime) {
-      showToast('Unable to perform action at this time', 'error');
+      showToast('No es pot realitzar l\'acció en aquest moment', 'error');
       return;
     }
 
     try {
+      // Crear objecte amb les dades de l'anime
       const animeData = {
         malId: anime.mal_id.toString(),
         title: anime.title,
@@ -172,6 +149,7 @@ const AnimeDetailPage = () => {
         status
       };
 
+      // Enviar dades al servidor
       const response = await fetch(`https://anitrack-93bx.onrender.com/api/user-anime/${user.sub}/anime`, {
         method: 'POST',
         headers: {
@@ -180,187 +158,56 @@ const AnimeDetailPage = () => {
         body: JSON.stringify(animeData)
       });
 
+      // Comprovar si hi ha hagut algun error
       if (!response.ok) {
-        throw new Error('Failed to update anime status');
+        throw new Error('Error updating anime status');
       }
 
+      // Mostrar missatge segons l'acció
       let message = '';
-      switch (status) {
-        case 'bookmarked':
-          message = `${anime.title} has been added to your bookmarks!`;
-          break;
-        case 'completed':
-          message = `${anime.title} has been marked as completed!`;
-          break;
-        case 'watching':
-          message = `${anime.title} has been added to your watching list!`;
-          break;
-        default:
-          message = `${anime.title} has been updated!`;
+      if (status === 'bookmarked') {
+        message = `${anime.title} has been added to your bookmarks!`;
+      } else if (status === 'completed') {
+        message = `${anime.title} has been marked as completed!`;
+      } else if (status === 'watching') {
+        message = `${anime.title} has been added to your watching list!`;
       }
+      
       showToast(message, 'success');
 
     } catch (error) {
       console.error('Error:', error);
-      showToast('Failed to update anime status', 'error');
+      showToast('Error updating anime status', 'error');
     }
-  };
+  }
 
+  // Mostrar spinner mentre carrega
   if (loading) {
     return <LoadingSpinner />;
   }
 
+  // Mostrar error si n'hi ha hagut
   if (error) {
     return (
       <div className="error-container">
         <p>{error}</p>
         <button onClick={() => window.location.reload()} className="retry-button">
-          Retry
+          Tornar a intentar
         </button>
       </div>
     );
   }
 
+  // Mostrar missatge si no hi ha dades
   if (!anime) {
-    return <div>No anime found</div>;
+    return <div>No s'ha trobat cap anime</div>;
   }
 
-  // Tab Content Render Functions
-  const renderCharactersTab = () => (
-    <div className="characters-grid">
-      {tabLoading ? (
-        <LoadingSpinner />
-      ) : (
-        characters.map((char) => (
-          <div key={char.character.mal_id} className="character-card">
-            <img 
-              src={char.character.images.jpg.image_url} 
-              alt={char.character.name}
-              className="character-image" 
-            />
-            <div className="character-info">
-              <h4>{char.character.name}</h4>
-              <p className="role">{char.role}</p>
-              {char.voice_actors && char.voice_actors.length > 0 && (
-                <div className="voice-actor">
-                  <small>VA: {char.voice_actors[0].person.name}</small>
-                </div>
-              )}
-            </div>
-          </div>
-        ))
-      )}
-    </div>
-  );
-
-  const renderStaffTab = () => (
-    <div className="staff-grid">
-      {tabLoading ? (
-        <LoadingSpinner />
-      ) : (
-        staff.map((person) => (
-          <div key={person.person.mal_id} className="staff-card">
-            <img 
-              src={person.person.images.jpg.image_url} 
-              alt={person.person.name}
-              className="staff-image" 
-            />
-            <div className="staff-info">
-              <h4>{person.person.name}</h4>
-              <p className="position">{person.positions.join(', ')}</p>
-            </div>
-          </div>
-        ))
-      )}
-    </div>
-  );
-
-  const renderStatsTab = () => (
-    <div className="stats-container">
-      {tabLoading ? (
-        <LoadingSpinner />
-      ) : stats && (
-        <>
-          <div className="stats-card">
-            <h4>Ratings Distribution</h4>
-            <div className="ratings-chart">
-              {Object.entries(stats.scores).map(([score, data]) => (
-                <div key={score} className="rating-bar">
-                  <div className="score">{score}</div>
-                  <div className="bar">
-                    <div 
-                      className="fill" 
-                      style={{width: `${(data.percentage)}%`}}
-                    />
-                  </div>
-                  <div className="percentage">{data.percentage.toFixed(1)}%</div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="stats-summary">
-            <div className="stat-item">
-              <h5>Completed</h5>
-              <p>{stats.completed.toLocaleString()}</p>
-            </div>
-            <div className="stat-item">
-              <h5>Watching</h5>
-              <p>{stats.watching.toLocaleString()}</p>
-            </div>
-            <div className="stat-item">
-              <h5>Plan to Watch</h5>
-              <p>{stats.plan_to_watch.toLocaleString()}</p>
-            </div>
-            <div className="stat-item">
-              <h5>Dropped</h5>
-              <p>{stats.dropped.toLocaleString()}</p>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
-
-  const renderReviewsTab = () => (
-    <div className="reviews-container">
-      {tabLoading ? (
-        <LoadingSpinner />
-      ) : (
-        reviews.map((review) => (
-          <div key={review.mal_id} className="review-card">
-            <div className="review-header">
-              <img 
-                src={review.user.images.jpg.image_url} 
-                alt={review.user.username}
-                className="reviewer-image" 
-              />
-              <div className="reviewer-info">
-                <h4>{review.user.username}</h4>
-                <div className="review-score">
-                  <Star size={16} className="star-icon" />
-                  <span>{review.score}</span>
-                </div>
-              </div>
-            </div>
-            <p className="review-text">{review.review}</p>
-            <div className="review-footer">
-              <span>{new Date(review.date).toLocaleDateString()}</span>
-              <div className="review-reactions">
-                <span>👍 {review.reactions.nice || 0}</span>
-                <span>💡 {review.reactions.informative || 0}</span>
-              </div>
-            </div>
-          </div>
-        ))
-      )}
-    </div>
-  );
-
-  // Render
   return (
     <ToastProvider>
       {({ showToast }) => (
         <div className="anime-detail-page">
+          {/* Banner amb imatge de fons i info bàsica */}
           <div 
             className="anime-banner" 
             style={{ 
@@ -371,16 +218,23 @@ const AnimeDetailPage = () => {
           >
             <div className="banner-overlay">
               <div className="anime-main-info">
+                {/* Imatge de l'anime */}
                 <img 
                   src={anime.images.jpg.large_image_url} 
                   alt={anime.title} 
                   className="anime-poster"
                 />
+                
+                {/* Informació principal */}
                 <div className="anime-info">
                   <h1>{anime.title}</h1>
+                  
+                  {/* Títol en japonès si existeix */}
                   {anime.title_japanese && (
                     <h2 className="japanese-title">{anime.title_japanese}</h2>
                   )}
+                  
+                  {/* Estadístiques bàsiques */}
                   <div className="anime-stats">
                     {anime.score && <span className="rating">{anime.score} ★</span>}
                     {anime.aired.from && (
@@ -395,7 +249,10 @@ const AnimeDetailPage = () => {
                       <span className="duration">{anime.duration}</span>
                     )}
                   </div>
+                  
+                  {/* Botons d'acció */}
                   <div className="action-buttons">
+                    {/* Botó per veure el tràiler */}
                     {anime.trailer?.url && (
                       <a 
                         href={anime.trailer.url} 
@@ -407,24 +264,31 @@ const AnimeDetailPage = () => {
                         Watch Trailer
                       </a>
                     )}
+                    
+                    {/* Botons per a les llistes */}
                     <div className="list-action-buttons">
+                      {/* Botó "Watching" */}
                       <button 
                         className="add-to-watching"
-                        onClick={() => handleAnimeAction('watching', showToast)}
+                        onClick={() => addToList('watching', showToast)}
                       >
                         <Eye size={20} />
                         Watching
                       </button>
+                      
+                      {/* Botó "Completed" */}
                       <button 
                         className="add-to-completed"
-                        onClick={() => handleAnimeAction('completed', showToast)}
+                        onClick={() => addToList('completed', showToast)}
                       >
                         <Check size={20} />
                         Completed
                       </button>
+                      
+                      {/* Botó "Bookmark" */}
                       <button 
                         className="add-to-bookmarked"
-                        onClick={() => handleAnimeAction('bookmarked', showToast)}
+                        onClick={() => addToList('bookmarked', showToast)}
                       >
                         <Bookmark size={20} />
                         Bookmark
@@ -436,7 +300,9 @@ const AnimeDetailPage = () => {
             </div>
           </div>
 
+          {/* Contingut i pestanyes */}
           <div className="anime-content">
+            {/* Navegació de pestanyes */}
             <div className="content-tabs">
               <button 
                 className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
@@ -470,7 +336,9 @@ const AnimeDetailPage = () => {
               </button>
             </div>
 
+            {/* Contingut de la pestanya activa */}
             <div className="tab-content">
+              {/* Contingut de la pestanya Overview */}
               {activeTab === 'overview' && (
                 <div className="overview-content">
                   <div className="main-info">
@@ -529,10 +397,148 @@ const AnimeDetailPage = () => {
                   </div>
                 </div>
               )}
-              {activeTab === 'characters' && renderCharactersTab()}
-              {activeTab === 'staff' && renderStaffTab()}
-              {activeTab === 'stats' && renderStatsTab()}
-              {activeTab === 'reviews' && renderReviewsTab()}
+
+              {/* Contingut de la pestanya Characters */}
+              {activeTab === 'characters' && (
+                <div className="characters-grid">
+                  {loadingTab ? (
+                    <LoadingSpinner />
+                  ) : characters.length > 0 ? (
+                    characters.map((char) => (
+                      <div key={char.character.mal_id} className="character-card">
+                        <img 
+                          src={char.character.images.jpg.image_url} 
+                          alt={char.character.name}
+                          className="character-image" 
+                        />
+                        <div className="character-info">
+                          <h4>{char.character.name}</h4>
+                          <p className="role">{char.role}</p>
+                          {char.voice_actors && char.voice_actors.length > 0 && (
+                            <div className="voice-actor">
+                              <small>VA: {char.voice_actors[0].person.name}</small>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div>No hi ha informació sobre els personatges</div>
+                  )}
+                </div>
+              )}
+
+              {/* Contingut de la pestanya Staff */}
+              {activeTab === 'staff' && (
+                <div className="staff-grid">
+                  {loadingTab ? (
+                    <LoadingSpinner />
+                  ) : staff.length > 0 ? (
+                    staff.map((person) => (
+                      <div key={person.person.mal_id} className="staff-card">
+                        <img 
+                          src={person.person.images.jpg.image_url} 
+                          alt={person.person.name}
+                          className="staff-image" 
+                        />
+                        <div className="staff-info">
+                          <h4>{person.person.name}</h4>
+                          <p className="position">{person.positions.join(', ')}</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div>No hi ha informació sobre l'equip de producció</div>
+                  )}
+                </div>
+              )}
+
+              {/* Contingut de la pestanya Stats */}
+              {activeTab === 'stats' && (
+                <div className="stats-container">
+                  {loadingTab ? (
+                    <LoadingSpinner />
+                  ) : stats ? (
+                    <>
+                      <div className="stats-card">
+                        <h4>Ratings Distribution</h4>
+                        <div className="ratings-chart">
+                          {Object.entries(stats.scores).map(([score, data]) => (
+                            <div key={score} className="rating-bar">
+                              <div className="score">{score}</div>
+                              <div className="bar">
+                                <div 
+                                  className="fill" 
+                                  style={{width: `${(data.percentage)}%`}}
+                                />
+                              </div>
+                              <div className="percentage">{data.percentage.toFixed(1)}%</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="stats-summary">
+                        <div className="stat-item">
+                          <h5>Completed</h5>
+                          <p>{stats.completed.toLocaleString()}</p>
+                        </div>
+                        <div className="stat-item">
+                          <h5>Watching</h5>
+                          <p>{stats.watching.toLocaleString()}</p>
+                        </div>
+                        <div className="stat-item">
+                          <h5>Plan to Watch</h5>
+                          <p>{stats.plan_to_watch.toLocaleString()}</p>
+                        </div>
+                        <div className="stat-item">
+                          <h5>Dropped</h5>
+                          <p>{stats.dropped.toLocaleString()}</p>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div>No hi ha estadístiques disponibles</div>
+                  )}
+                </div>
+              )}
+
+              {/* Contingut de la pestanya Reviews */}
+              {activeTab === 'reviews' && (
+                <div className="reviews-container">
+                  {loadingTab ? (
+                    <LoadingSpinner />
+                  ) : reviews.length > 0 ? (
+                    reviews.map((review) => (
+                      <div key={review.mal_id} className="review-card">
+                        <div className="review-header">
+                          <img 
+                            src={review.user.images.jpg.image_url} 
+                            alt={review.user.username}
+                            className="reviewer-image" 
+                          />
+                          <div className="reviewer-info">
+                            <h4>{review.user.username}</h4>
+                            <div className="review-score">
+                              <Star size={16} className="star-icon" />
+                              <span>{review.score}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="review-text">{review.review}</p>
+                        <div className="review-footer">
+                          <span>{new Date(review.date).toLocaleDateString()}</span>
+                          <div className="review-reactions">
+                            <span>👍 {review.reactions.nice || 0}</span>
+                            <span>💡 {review.reactions.informative || 0}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div>No hi ha ressenyes disponibles</div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
