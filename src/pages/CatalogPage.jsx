@@ -4,7 +4,7 @@ import AnimeCard from '../components/AnimeCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const CatalogPage = () => {
-  // Llista de gèneres predefinits
+  // Llista de gèneres predefinits 
   const genres = [
     { id: 1, name: "Action" },
     { id: 2, name: "Adventure" },
@@ -14,7 +14,10 @@ const CatalogPage = () => {
     { id: 14, name: "Horror" },
     { id: 7, name: "Mystery" },
     { id: 22, name: "Romance" },
-    { id: 24, name: "Sci-Fi" }
+    { id: 24, name: "Sci-Fi" },
+    { id: 30, name: "Sports" },
+    { id: 37, name: "Supernatural" },
+    { id: 23, name: "School" }
   ];
 
   // Estats basics per animes
@@ -35,7 +38,9 @@ const CatalogPage = () => {
   const [genreFilter, setGenreFilter] = useState([]);
   const [statusFilter, setStatusFilter] = useState([]);
   const [ratingFilter, setRatingFilter] = useState([]);
-  const [yearFilter, setYearFilter] = useState(new Date().getFullYear());
+  
+  // Modificat: canviat a string que pot ser "all" o un any específic
+  const [yearFilter, setYearFilter] = useState("all");
   
   // Estat per ordenar
   const [sortBy, setSortBy] = useState('popularity');
@@ -57,6 +62,13 @@ const CatalogPage = () => {
 
   // Nou estat per mostrar filtres actius
   const [activeFilters, setActiveFilters] = useState([]);
+
+  // Generar llista d'anys per al desplegable
+  const currentYear = new Date().getFullYear();
+  const yearOptions = ["all"];
+  for (let year = currentYear; year >= 1980; year--) {
+    yearOptions.push(year.toString());
+  }
 
   // Funció per actualitzar els filtres actius
   useEffect(() => {
@@ -83,8 +95,8 @@ const CatalogPage = () => {
       }
     });
     
-    // Afegir any si és diferent a l'actual
-    if (yearFilter !== new Date().getFullYear()) {
+    // Afegir any si no és "all"
+    if (yearFilter !== "all") {
       filters.push({ type: 'year', id: 'year', name: `Year: ${yearFilter}` });
     }
     
@@ -136,14 +148,11 @@ const CatalogPage = () => {
     setAnimes([]);
   };
 
-  // Canviar any
+  // Canviat: ara funciona amb un desplegable en lloc d'un input
   const handleYearChange = (e) => {
-    const year = parseInt(e.target.value);
-    if (year >= 1940 && year <= new Date().getFullYear()) {
-      setYearFilter(year);
-      setPage(1);
-      setAnimes([]);
-    }
+    setYearFilter(e.target.value);
+    setPage(1);
+    setAnimes([]);
   };
   
   // Funció per eliminar un filtre
@@ -155,7 +164,7 @@ const CatalogPage = () => {
     } else if (type === 'rating') {
       setRatingFilter(ratingFilter.filter(rating => rating !== id));
     } else if (type === 'year') {
-      setYearFilter(new Date().getFullYear());
+      setYearFilter("all");
     }
     setPage(1);
     setAnimes([]);
@@ -166,7 +175,7 @@ const CatalogPage = () => {
     setGenreFilter([]);
     setStatusFilter([]);
     setRatingFilter([]);
-    setYearFilter(new Date().getFullYear());
+    setYearFilter("all");
     setPage(1);
     setAnimes([]);
   };
@@ -211,9 +220,9 @@ const CatalogPage = () => {
           url += '&order_by=score&sort=desc';
         }
         
-        // Afegir filtre per any si no és upcoming
+        // Afegir filtre per any si no és "all" i no és upcoming
         const isUpcoming = statusFilter.includes('Upcoming');
-        if (yearFilter && !isUpcoming) {
+        if (yearFilter !== "all" && !isUpcoming) {
           url += `&start_date=${yearFilter}-01-01&end_date=${yearFilter}-12-31`;
         }
         
@@ -314,7 +323,7 @@ const CatalogPage = () => {
 
         <div className="filters-content">
           
-          {/* Secció Any */}
+          {/* Secció Any - Modificada per usar un desplegable */}
           <div className="filter-section">
             <div 
               className="filter-header"
@@ -325,15 +334,17 @@ const CatalogPage = () => {
             </div>
             <div className={`filter-options ${yearOpen ? '' : 'collapsed'}`}>
               <div className="year-filter">
-                <input
-                  type="number"
-                  min="1940"
-                  max={new Date().getFullYear()}
+                <select
                   value={yearFilter}
                   onChange={handleYearChange}
                   className="year-input"
                   disabled={statusFilter.includes('Upcoming')}
-                />
+                >
+                  <option value="all">All time</option>
+                  {yearOptions.slice(1).map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
                 {statusFilter.includes('Upcoming') && (
                   <p style={{ color: '#666', fontSize: '0.8rem', marginTop: '0.5rem' }}>
                     Year filter is disabled for upcoming anime

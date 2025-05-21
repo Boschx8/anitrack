@@ -20,7 +20,7 @@ const Navbar = () => {
         <div className={`nav-links ${isMenuOpen ? 'nav-active' : ''}`}>
           <Link to="/" onClick={() => setIsMenuOpen(false)}>Home</Link>
           <Link to="/catalog" onClick={() => setIsMenuOpen(false)}>Catalog</Link>
-          <Link to="/collections" onClick={() => setIsMenuOpen(false)}>Collections</Link>
+          <Link to="/collections" onClick={() => setIsMenuOpen(false)}>News</Link>
           {/* Mobile-only buttons */}
           <div className="mobile-auth-buttons">
             {isAuthenticated ? (
@@ -67,7 +67,7 @@ const Navbar = () => {
             </>
           )}
         </div>
-        <button className="menu-btn" onClick={toggleMenu}>
+        <button className="menu-btn" aria-label="menu button" onClick={toggleMenu}>
           {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
