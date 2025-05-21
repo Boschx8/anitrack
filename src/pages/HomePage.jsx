@@ -125,6 +125,7 @@ const HomePage = () => {
 
     return (
       <section className="anime-section">
+        <h1 className="visually-hidden">AniTrack Homepage</h1>
         <div className="section-header">
           <h3>Trending Now</h3>
         </div>

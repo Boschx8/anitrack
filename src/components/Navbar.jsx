@@ -14,7 +14,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar">
+    <nav className="navbar" aria-label="Main navigation">
       <div className="nav-left">
         <Link to="/" className="logo">AniTrack</Link>
         <div className={`nav-links ${isMenuOpen ? 'nav-active' : ''}`}>
