@@ -455,7 +455,7 @@ const AnimeDetailPage = () => {
 
               {/* Contingut de la pestanya Stats */}
               {activeTab === 'stats' && (
-                <div className="stats-container">
+                <div className="stat-container">
                   {loadingTab ? (
                     <LoadingSpinner />
                   ) : stats ? (
